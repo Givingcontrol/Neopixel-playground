@@ -26,6 +26,7 @@ typedef struct struct_message {
   int green ;
  int red ;
  int blue;
+ int sent_mode = 0;
 } struct_message;
 
 // Create a struct_message called myData
@@ -35,6 +36,9 @@ struct_message myData;
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&myData, incomingData, sizeof(myData));
 
+  if ( myData.sent_mode == 3){colour_fade();}
+
+  else{
    int g = myData.green;
    int r = myData.red ;
     int b = myData.blue ;
@@ -55,7 +59,32 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   strip.setBrightness(255);
   uint32_t color = strip.Color(r, g, b);
   strip.fill(color, 0, LED_COUNT);
-  strip.show(); 
+  strip.show();
+  } 
+}
+
+// Fill along the length of the strip in various colors...
+void colour_fade(){
+  colorWipe(strip.Color(255,   0,   0), 50); // Red
+  colorWipe(strip.Color(245,   124,   0), 50); // Orange
+  colorWipe(strip.Color(245,   247,   0), 50); // Yellow
+  colorWipe(strip.Color(  0, 255,   0), 50); // Green
+  colorWipe(strip.Color(  3,   3, 255), 50); // Blue
+  colorWipe(strip.Color(255,   0,   250), 50); // Red
+  }
+
+
+// Fill strip pixels one after another with a color. Strip is NOT cleared
+// first; anything there will be covered pixel by pixel. Pass in color
+// (as a single 'packed' 32-bit value, which you can get by calling
+// strip.Color(red, green, blue) as shown in the loop() function above),
+// and a delay time (in milliseconds) between pixels.
+  void colorWipe(uint32_t color, int wait) {
+  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+    strip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
+    strip.show();                          //  Update strip to match
+    delay(wait);                           //  Pause for a moment
+  }
 }
  
 void setup() {
@@ -85,6 +114,8 @@ strip.begin();
 }
 
 void loop() {
+
+  esp_now_register_recv_cb(OnDataRecv);
 /*
  //  strip.setBrightness(255);
   uint32_t color = strip.Color(r,g, b);
